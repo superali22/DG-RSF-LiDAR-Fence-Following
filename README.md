@@ -88,7 +88,7 @@ Accordingly, the released resources supplement, rather than replace, the real-wo
 
 Associated Publication
 
-Title: [Insert the final title of the associated research article]
+Title: [Dynamic-Gated Fence Following for 2D LiDAR-Based Feed-Pushing Robots]
 
 Journal: Computers and Electronics in Agriculture
 
