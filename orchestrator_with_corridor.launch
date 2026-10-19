@@ -1,0 +1,186 @@
+<launch>
+    <node pkg="feed_pusher_schedule"
+          type="corridor_parallel_right_selector_node"
+          name="corridor_parallel_right_selector_node"
+          output="screen">
+
+        <!-- ===== 原有参数：保持不变 ===== -->
+        <param name="scan_topic" value="/scan"/>
+        <param name="start_capture_topic" value="/start_capture"/>
+        <param name="start_capture_feedback_topic" value="/start_capture_feedback"/>
+        <param name="fence_status_topic" value="/fence_follow/status"/>
+        <param name="heartbeat_topic" value="/heartbeat/fence_follow"/>
+
+        <!-- 下面这些如果你原来有配，也可以继续保留；没写就走代码默认值 -->
+        <param name="marker_array_topic" value="/corridor_parallel_right_selector/markers"/>
+        <param name="path_topic" value="/corridor_parallel_right_selector/right_local_path"/>
+        <param name="cmd_vel_topic" value="/cmd_vel"/>
+
+        <!-- ===== 基础量测范围 ===== -->
+        <param name="range_min_use" value="0.10"/>
+        <param name="range_max_use" value="9.00"/>
+
+        <!-- ===== 左右角域筛点 ===== -->
+        <param name="left_sector_angle_min_deg" value="1.0"/>
+        <param name="left_sector_angle_max_deg" value="160.0"/>
+        <param name="right_sector_angle_min_deg" value="-175.0"/>
+        <param name="right_sector_angle_max_deg" value="-1.0"/>
+
+        <!-- ===== 侧向距离门限 ===== -->
+        <param name="enable_lateral_band_filter" value="false"/>
+        <param name="left_min_abs_y_m" value="0.10"/>
+        <param name="left_max_abs_y_m" value="3.00"/>
+        <param name="right_min_abs_y_m" value="0.10"/>
+        <param name="right_max_abs_y_m" value="3.00"/>
+
+        <!-- ===== 原始激光坏点滤波 ===== -->
+        <param name="enable_scan_outlier_filter" value="true"/>
+        <param name="filter_only_right_sector" value="true"/>
+        <param name="scan_median_half_window" value="2"/>
+        <param name="scan_hampel_k" value="2.8"/>
+        <param name="scan_hampel_min_dev_m" value="0.03"/>
+        <param name="scan_continuity_half_window" value="2"/>
+        <param name="scan_continuity_max_range_jump_m" value="0.18"/>
+        <param name="scan_min_valid_neighbors" value="1"/>
+
+        <!-- ===== 动态右墙门控 ===== -->
+        <param name="enable_dynamic_right_wall_gate" value="true"/>
+        <param name="dynamic_gate_lateral_margin_m" value="0.15"/>
+        <param name="dynamic_gate_projection_back_m" value="1.20"/>
+        <param name="dynamic_gate_projection_forward_m" value="10.00"/>
+        <param name="dynamic_gate_min_points" value="4"/>
+        <param name="dynamic_gate_max_time_gap_sec" value="1.00"/>
+
+        <!-- ===== 聚类参数 ===== -->
+        <param name="cluster_break_distance_m" value="0.15"/>
+        <param name="cluster_max_index_gap" value="3"/>
+        <param name="min_cluster_points" value="2"/>
+
+        <!-- ===== 自适应聚类 + 二次合并 + 短时累积 ===== -->
+        <param name="enable_adaptive_clustering" value="true"/>
+        <param name="adaptive_cluster_base_m" value="0.03"/>
+        <param name="adaptive_cluster_angle_scale" value="2.20"/>
+        <param name="adaptive_cluster_max_distance_m" value="0.60"/>
+        <param name="adaptive_cluster_max_angle_gap_deg" value="2.00"/>
+
+        <param name="enable_secondary_merge" value="true"/>
+        <param name="secondary_merge_angle_thresh_deg" value="5.0"/>
+        <param name="secondary_merge_rho_thresh_m" value="0.10"/>
+        <param name="secondary_merge_projection_gap_m" value="0.45"/>
+        <param name="secondary_merge_max_combined_residual_m" value="0.035"/>
+
+        <param name="enable_short_time_accumulation" value="true"/>
+        <param name="accumulation_history_frames" value="4"/>
+        <param name="accumulation_max_age_sec" value="0.18"/>
+
+        <!-- ===== 最近右墙局部直线拟合 ===== -->
+        <param name="nearest_wall_cluster_min_arc_m" value="0.35"/>
+        <param name="nearest_wall_max_seed_range_m" value="4.50"/>
+        <param name="local_support_symmetric_half_arc_m" value="1.60"/>
+        <param name="local_support_one_side_arc_m" value="2.80"/>
+        <param name="local_support_max_step_m" value="0.60"/>
+        <param name="local_support_weight_sigma_m" value="0.80"/>
+        <param name="local_support_min_points" value="5"/>
+        <param name="local_support_min_span_m" value="0.25"/>
+        <param name="local_fit_max_residual_m" value="0.10"/>
+        <param name="local_fit_min_linearity_ratio" value="6.0"/>
+        <param name="local_fit_seed_to_line_max_m" value="0.12"/>
+
+        <!-- ===== 鲁棒重拟合 ===== -->
+        <param name="enable_robust_refit" value="true"/>
+        <param name="robust_refit_iterations" value="2"/>
+        <param name="robust_refit_outlier_dist_m" value="0.08"/>
+        <param name="robust_refit_min_keep_ratio" value="0.45"/>
+
+        <!-- ===== 跳空桥接 ===== -->
+        <param name="enable_gap_bridge" value="true"/>
+        <param name="gap_bridge_max_projection_gap_m" value="0.80"/>
+        <param name="gap_bridge_max_lateral_error_m" value="0.18"/>
+        <param name="gap_bridge_max_endpoint_distance_m" value="2.00"/>
+        <param name="gap_bridge_min_segment_arc_m" value="0.18"/>
+        <param name="gap_bridge_min_points" value="3"/>
+        <param name="gap_bridge_max_hops_each_side" value="3"/>
+        <param name="gap_bridge_refit_max_residual_m" value="0.12"/>
+
+        <!-- ===== 线性度筛选 ===== -->
+        <param name="min_cluster_span_m" value="0.55"/>
+        <param name="max_pca_residual_m" value="0.025"/>
+        <param name="min_linearity_ratio" value="18.0"/>
+        <param name="max_abs_tangent_angle_deg" value="18.0"/>
+
+        <!-- ===== 候选打分 ===== -->
+        <param name="score_weight_span" value="5.0"/>
+        <param name="score_weight_points" value="0.05"/>
+        <param name="score_weight_linearity" value="0.10"/>
+        <param name="score_weight_residual" value="20.0"/>
+        <param name="score_weight_angle_deg" value="0.08"/>
+        <param name="linearity_ratio_saturate" value="80.0"/>
+
+        <!-- ===== 右侧局部路径 ===== -->
+        <param name="enable_right_local_path" value="true"/>
+        <param name="right_path_offset_m" value="1.2"/>
+        <param name="right_path_offset_min_m" value="0.80"/>
+        <param name="right_path_offset_max_m" value="1.50"/>
+        <param name="path_forward_length_m" value="4.00"/>
+        <param name="path_backward_length_m" value="0.20"/>
+        <param name="path_resolution_m" value="0.10"/>
+        <param name="path_min_x_m" value="-0.20"/>
+        <param name="min_path_points" value="2"/>
+
+        <!-- ===== 路径稳定器 ===== -->
+        <param name="enable_path_stabilizer" value="true"/>
+        <param name="path_freeze_lateral_thresh_m" value="0.04"/>
+        <param name="path_freeze_angle_thresh_deg" value="1.5"/>
+        <param name="path_update_trigger_lateral_thresh_m" value="0.06"/>
+        <param name="path_update_trigger_angle_thresh_deg" value="2.0"/>
+        <param name="path_update_required_consecutive_frames" value="4"/>
+        <param name="path_transition_alpha" value="0.80"/>
+        <param name="path_state_hold_sec" value="1.5"/>
+        <param name="path_reinitialize_after_lost_sec" value="0.8"/>
+
+        <!-- ===== 可视化 ===== -->
+        <param name="publish_sector_rays" value="true"/>
+        <param name="publish_lateral_band_markers" value="true"/>
+        <param name="publish_accumulated_points_markers" value="true"/>
+        <param name="sector_ray_length_m" value="5.0"/>
+        <param name="lateral_band_x_min_m" value="-0.20"/>
+        <param name="lateral_band_x_max_m" value="8.00"/>
+        <param name="point_marker_scale" value="0.05"/>
+        <param name="candidate_line_scale" value="0.035"/>
+        <param name="best_line_scale" value="0.085"/>
+        <param name="line_display_extend_m" value="0.25"/>
+        <param name="path_marker_scale" value="0.10"/>
+        <param name="path_point_marker_scale" value="0.07"/>
+        <param name="path_offset_line_scale" value="0.05"/>
+
+        <!-- ===== 路径跟踪控制器 ===== -->
+        <param name="enable_path_tracker" value="true"/>
+        <param name="tracking_controller_type" value="stanley"/>
+        <param name="publish_zero_cmd_when_invalid" value="true"/>
+        <param name="tracking_nominal_speed" value="0.55"/>
+        <param name="tracking_min_speed" value="0.06"/>
+        <param name="tracking_max_speed" value="0.70"/>
+        <param name="tracking_max_angular_speed" value="0.80"/>
+        <param name="tracking_heading_slowdown_gain" value="1.20"/>
+        <param name="tracking_lateral_slowdown_gain" value="1.00"/>
+        <param name="tracking_min_speed_ratio" value="0.20"/>
+        <param name="tracking_stop_heading_error_deg" value="60.0"/>
+        <param name="tracking_stop_cross_track_error_m" value="1.20"/>
+        <param name="tracking_stop_path_forward_x_thresh_m" value="0.25"/>
+        <param name="tracking_reference_forward_offset_m" value="0.08"/>
+
+        <!-- ===== Stanley ===== -->
+        <param name="stanley_gain" value="1.00"/>
+        <param name="stanley_softening_speed" value="0.30"/>
+        <param name="stanley_heading_gain" value="1.00"/>
+        <param name="stanley_cross_track_gain" value="1.00"/>
+
+        <!-- ===== Pure Pursuit ===== -->
+        <param name="pure_pursuit_lookahead_base_m" value="0.90"/>
+        <param name="pure_pursuit_lookahead_speed_gain" value="1.20"/>
+        <param name="pure_pursuit_min_lookahead_m" value="0.70"/>
+        <param name="pure_pursuit_max_lookahead_m" value="2.20"/>
+        <param name="pure_pursuit_curvature_gain" value="1.00"/>
+
+    </node>
+</launch>
